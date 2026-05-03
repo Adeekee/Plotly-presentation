@@ -1,0 +1,275 @@
+---
+title: "The Music of the Solar System"
+subtitle: "An Interactive Journey Through Planetary Data"
+author: "Data Science Presentation"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  ioslides_presentation:
+    widescreen: true
+    smaller: false
+    css: styles.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(plotly)
+library(dplyr)
+```
+
+## Welcome to the Solar System {.slide-title}
+
+> *"The cosmos is within us. We are made of star-stuff."*  
+> — Carl Sagan
+
+This presentation explores **planetary data** through interactive Plotly visualizations.  
+Navigate the slides to discover patterns in our solar neighborhood.
+
+**Created:** `r format(Sys.Date(), '%B %d, %Y')`
+
+---
+
+## The Data {.data-slide}
+
+We use NASA's planetary constants to explore relationships between:
+
+- 🪐 **Orbital Period** — how long each planet takes to orbit the Sun
+- 📏 **Distance from Sun** — semi-major axis in Astronomical Units (AU)  
+- 🌍 **Planet Mass** — relative to Earth
+- 🌡️ **Mean Temperature** — surface temperature in Kelvin
+- 🔵 **Planet Size** — radius relative to Earth
+
+```{r planet-data}
+planets <- data.frame(
+  name        = c("Mercury","Venus","Earth","Mars",
+                  "Jupiter","Saturn","Uranus","Neptune"),
+  distance_au = c(0.387, 0.723, 1.000, 1.524,
+                  5.203, 9.537, 19.19, 30.07),
+  period_days = c(87.97, 224.7, 365.25, 686.97,
+                  4332.6, 10759, 30687, 60190),
+  mass_earth  = c(0.055, 0.815, 1.000, 0.107,
+                  317.8, 95.16, 14.54, 17.15),
+  radius_km   = c(2439, 6052, 6371, 3390,
+                  69911, 58232, 25362, 24622),
+  temp_k      = c(440, 737, 288, 210,
+                  165, 134, 76, 72),
+  color       = c("#b5b5b5","#e8cda0","#4a9af5","#c1440e",
+                  "#c9a96e","#e8d5a3","#72d7e8","#4169e1"),
+  type        = c("Rocky","Rocky","Rocky","Rocky",
+                  "Gas Giant","Gas Giant","Ice Giant","Ice Giant")
+)
+```
+
+---
+
+## Interactive Planetary Explorer {.plotly-slide}
+
+```{r main-plot, fig.width=10, fig.height=5.5}
+fig <- plot_ly(
+  planets,
+  x = ~distance_au,
+  y = ~period_days,
+  size = ~radius_km,
+  color = ~type,
+  colors = c("Rocky" = "#e8634a", "Gas Giant" = "#f0b429",
+             "Ice Giant" = "#38bdf8"),
+  text = ~paste0(
+    "<b>", name, "</b><br>",
+    "Distance: ", distance_au, " AU<br>",
+    "Orbital Period: ", formatC(period_days, format="f", digits=0), " days<br>",
+    "Mass: ", mass_earth, "× Earth<br>",
+    "Radius: ", formatC(radius_km, big.mark=",", format="d"), " km<br>",
+    "Avg Temp: ", temp_k, " K"
+  ),
+  hoverinfo = "text",
+  type = "scatter",
+  mode = "markers",
+  marker = list(
+    sizemode = "diameter",
+    sizeref = 2,
+    opacity = 0.85,
+    line = list(color = "white", width = 1.5)
+  )
+) %>%
+  layout(
+    title = list(
+      text = "Planetary Orbital Period vs Distance from the Sun",
+      font = list(size = 18, color = "#1e293b", family = "Georgia")
+    ),
+    xaxis = list(
+      title = "Distance from Sun (Astronomical Units)",
+      type  = "log",
+      gridcolor = "#e2e8f0",
+      tickfont  = list(color = "#64748b"),
+      titlefont = list(color = "#334155")
+    ),
+    yaxis = list(
+      title = "Orbital Period (Earth Days)",
+      type  = "log",
+      gridcolor = "#e2e8f0",
+      tickfont  = list(color = "#64748b"),
+      titlefont = list(color = "#334155")
+    ),
+    legend = list(
+      title = list(text = "<b>Planet Type</b>"),
+      font  = list(color = "#334155")
+    ),
+    plot_bgcolor  = "#f8fafc",
+    paper_bgcolor = "#f8fafc",
+    hoverlabel = list(
+      bgcolor   = "#1e293b",
+      font      = list(color = "white", size = 13)
+    ),
+    annotations = list(
+      list(
+        x = log10(1), y = log10(365),
+        text = "🌍 Earth", showarrow = FALSE,
+        font = list(size = 12, color = "#334155"),
+        xshift = 20, yshift = 10
+      )
+    )
+  )
+
+fig
+```
+
+*Hover over each planet · Bubble size = planet radius · Axes are log-scaled*
+
+---
+
+## Kepler's Third Law — Visualised {.kepler-slide}
+
+The log-log plot reveals **Kepler's Third Law**: $T^2 \propto a^3$
+
+```{r kepler, fig.width=9, fig.height=4.5}
+kepler <- planets %>%
+  mutate(
+    log_dist   = log10(distance_au),
+    log_period = log10(period_days / 365.25),  # convert to years
+    label      = name
+  )
+
+fit <- lm(log_period ~ log_dist, data = kepler)
+x_seq <- seq(-0.5, 1.55, length.out = 100)
+y_fit <- predict(fit, newdata = data.frame(log_dist = x_seq))
+
+fig2 <- plot_ly() %>%
+  add_trace(
+    data = kepler,
+    x = ~log_dist, y = ~log_period,
+    type = "scatter", mode = "markers+text",
+    text = ~label, textposition = "top center",
+    marker = list(
+      color = planets$color, size = 14,
+      line = list(color = "white", width = 1.5)
+    ),
+    hovertext = ~paste0(name, "<br>log(a) = ", round(log_dist,3),
+                        "<br>log(T) = ", round(log_period,3)),
+    hoverinfo = "text",
+    name = "Planets"
+  ) %>%
+  add_trace(
+    x = x_seq, y = y_fit,
+    type = "scatter", mode = "lines",
+    line = list(color = "#6366f1", width = 2, dash = "dash"),
+    name = paste0("Fit (slope = ", round(coef(fit)[2],2), ")")
+  ) %>%
+  layout(
+    title = list(
+      text = "Kepler's Third Law: log(Period) vs log(Distance)",
+      font = list(size = 16, color = "#1e293b", family = "Georgia")
+    ),
+    xaxis = list(title = "log₁₀(Distance in AU)", gridcolor = "#e2e8f0",
+                 titlefont = list(color="#334155"), tickfont=list(color="#64748b")),
+    yaxis = list(title = "log₁₀(Period in Years)", gridcolor = "#e2e8f0",
+                 titlefont = list(color="#334155"), tickfont=list(color="#64748b")),
+    plot_bgcolor  = "#f8fafc",
+    paper_bgcolor = "#f8fafc",
+    legend = list(font = list(color = "#334155")),
+    hoverlabel = list(bgcolor="#1e293b", font=list(color="white", size=13))
+  )
+
+fig2
+```
+
+The best-fit slope is **≈ 1.5**, confirming $T \propto a^{3/2}$ — a perfect power law hiding in our solar system.
+
+---
+
+## Temperature vs Distance {.temp-slide}
+
+```{r temp-plot, fig.width=9, fig.height=4.5}
+fig3 <- plot_ly(
+  planets,
+  x = ~distance_au,
+  y = ~temp_k,
+  type = "scatter",
+  mode = "markers+lines",
+  marker = list(
+    color = ~color, size = ~log(radius_km)*2.5,
+    line = list(color="white", width=1.5),
+    opacity = 0.9
+  ),
+  line = list(color = "#94a3b8", width = 1, dash = "dot"),
+  text = ~paste0("<b>", name, "</b><br>",
+                 round(distance_au, 2), " AU · ",
+                 temp_k, " K (", round(temp_k - 273, 0), "°C)"),
+  hoverinfo = "text"
+) %>%
+  add_annotations(
+    x = planets$distance_au,
+    y = planets$temp_k,
+    text = planets$name,
+    showarrow = FALSE,
+    yshift = 14,
+    font = list(size = 11, color = "#334155")
+  ) %>%
+  layout(
+    title = list(
+      text  = "Surface Temperature Plummets with Distance",
+      font  = list(size = 16, color = "#1e293b", family = "Georgia")
+    ),
+    xaxis = list(title = "Distance from Sun (AU)", type = "log",
+                 gridcolor = "#e2e8f0",
+                 titlefont = list(color="#334155"), tickfont=list(color="#64748b")),
+    yaxis = list(title = "Mean Temperature (Kelvin)", gridcolor = "#e2e8f0",
+                 titlefont = list(color="#334155"), tickfont=list(color="#64748b")),
+    shapes = list(
+      list(type="line", x0=0.3, x1=35, y0=273, y1=273,
+           line=list(color="#22c55e", width=1.5, dash="dash"))
+    ),
+    annotations = list(
+      list(x=1.2, y=273, text="0°C (Water freezes)", showarrow=FALSE,
+           font=list(color="#22c55e", size=11), xanchor="left")
+    ),
+    plot_bgcolor  = "#f8fafc",
+    paper_bgcolor = "#f8fafc",
+    showlegend    = FALSE,
+    hoverlabel    = list(bgcolor="#1e293b", font=list(color="white", size=13))
+  )
+
+fig3
+```
+
+*Note: Venus is hotter than Mercury due to its extreme greenhouse effect.*
+
+---
+
+## Key Takeaways
+
+### What the data shows us:
+
+1. **Kepler's Third Law holds perfectly** — $T^2 = a^3$ gives slope 1.5 on log-log axes, a relationship discovered in 1619.
+
+2. **Temperature follows an inverse power law** with distance — the outer solar system is brutally cold (Neptune: −201°C).
+
+3. **Size doesn't follow a simple gradient** — the gas giants dwarf the inner rocky planets by orders of magnitude.
+
+4. **Plotly makes exploration effortless** — zoom, hover, and filter to find patterns yourself.
+
+---
+
+**Data sources:** NASA Planetary Fact Sheets  
+**Tools:** R · Plotly · R Markdown · ioslides  
+**Created:** `r format(Sys.Date(), '%B %d, %Y')`
+
+*Upload this HTML to GitHub Pages, RPubs, or Neocities to share publicly.*

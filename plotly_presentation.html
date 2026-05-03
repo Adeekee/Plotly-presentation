@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The Music of the Solar System — Plotly Presentation</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Syne:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --ink:     #0d1117;
+  --paper:   #f5f0e8;
+  --gold:    #c9a84c;
+  --gold-lt: #e8d5a3;
+  --rust:    #b85c38;
+  --teal:    #2a7f8a;
+  --slate:   #3d5a6c;
+  --mist:    #e8eef2;
+  --dim:     #8a9aaa;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  background: var(--ink);
+  color: var(--paper);
+  overflow-x: hidden;
+}
+
+/* ── SLIDE SYSTEM ── */
+.deck {
+  width: 100vw;
+}
+
+.slide {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 5vh 8vw;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── SLIDE BACKGROUNDS ── */
+.slide-1 { background: var(--ink); }
+.slide-2 { background: #0f1923; }
+.slide-3 { background: #0b1520; }
+.slide-4 { background: #0d1a14; }
+.slide-5 { background: #131020; }
+.slide-6 { background: #111; }
+
+/* Starfield background */
+.stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.stars::before, .stars::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 60% 20%, rgba(255,255,255,.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 50%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 10%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 35% 45%, rgba(255,255,255,.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 85%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 65%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 55%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 10%, rgba(255,255,255,.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 90%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 65% 40%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 85% 80%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 45% 60%, rgba(255,255,255,.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 5%  25%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 95% 40%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(2px 2px at 30% 15%, rgba(255,255,255,.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 95%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 48% 48%, rgba(255,255,255,.7) 0%, transparent 100%);
+}
+.stars::after {
+  transform: rotate(37deg) scale(1.5);
+  opacity: .4;
+}
+
+/* ── SLIDE NAV ── */
+.nav {
+  position: fixed;
+  right: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  z-index: 100;
+}
+.nav-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.25);
+  cursor: pointer;
+  transition: all .3s;
+  border: none;
+}
+.nav-dot.active, .nav-dot:hover {
+  background: var(--gold);
+  transform: scale(1.4);
+}
+
+/* ── SLIDE INDICATOR ── */
+.slide-num {
+  position: absolute;
+  bottom: 2rem;
+  right: 2.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: .12em;
+}
+
+/* ── TYPOGRAPHY ── */
+.eyebrow {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 1.2rem;
+}
+
+h1.hero {
+  font-size: clamp(3rem, 8vw, 7rem);
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -.02em;
+  margin-bottom: 1.5rem;
+  color: var(--paper);
+}
+h1.hero em {
+  font-style: italic;
+  color: var(--gold);
+}
+
+h2.slide-heading {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 300;
+  line-height: 1.2;
+  letter-spacing: -.01em;
+  margin-bottom: 1rem;
+  color: var(--paper);
+}
+h2.slide-heading span { color: var(--gold); }
+
+.subtitle {
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  font-weight: 300;
+  color: var(--dim);
+  font-style: italic;
+  max-width: 650px;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+.date-badge {
+  display: inline-block;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  background: rgba(201,168,76,.12);
+  border: 1px solid rgba(201,168,76,.3);
+  color: var(--gold);
+  padding: .4em 1em;
+  border-radius: 2px;
+}
+
+/* ── DECORATIVE RING ── */
+.planet-ring {
+  position: absolute;
+  right: -5vw;
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(300px, 45vw, 600px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%,
+    #f5deb3 0%, #c9a96e 30%, #8b6914 60%, #2a1a00 100%);
+  box-shadow:
+    inset -40px -40px 80px rgba(0,0,0,.6),
+    0 0 80px rgba(201,168,76,.15),
+    0 0 200px rgba(201,168,76,.05);
+  opacity: .65;
+  pointer-events: none;
+}
+.planet-ring::before {
+  content: '';
+  position: absolute;
+  inset: -30%;
+  border-radius: 50%;
+  border: 18px solid rgba(201,168,76,.12);
+  box-shadow:
+    0 0 0 35px rgba(201,168,76,.05),
+    0 0 0 60px rgba(201,168,76,.02);
+  transform: rotateX(75deg);
+}
+
+/* ── DATA PILLS ── */
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin: 1.5rem 0;
+}
+.pill {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 100px;
+  padding: .4em 1em;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  color: var(--paper);
+  letter-spacing: .03em;
+}
+.pill .icon { font-size: 16px; }
+
+/* ── PLOTLY CONTAINER ── */
+.plot-container {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.06);
+  box-shadow: 0 20px 60px rgba(0,0,0,.4);
+  background: rgba(15,25,35,.8);
+  margin: 1rem 0;
+}
+
+.plot-caption {
+  font-size: 13px;
+  color: var(--dim);
+  font-style: italic;
+  text-align: center;
+  margin-top: .6rem;
+  font-family: 'Syne', sans-serif;
+  letter-spacing: .04em;
+}
+
+/* ── EQUATION ── */
+.equation {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(1.2rem, 3vw, 2rem);
+  color: var(--gold);
+  background: rgba(201,168,76,.08);
+  border-left: 3px solid var(--gold);
+  padding: .8em 1.2em;
+  margin: 1.5rem 0;
+  letter-spacing: .05em;
+}
+
+/* ── TAKEAWAY CARDS ── */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.card {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.07);
+  border-top: 2px solid var(--gold);
+  border-radius: 4px;
+  padding: 1.2rem 1.4rem;
+}
+.card-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .15em;
+  color: var(--gold);
+  margin-bottom: .5rem;
+}
+.card p {
+  font-size: .95rem;
+  color: rgba(245,240,232,.7);
+  line-height: 1.6;
+}
+
+/* ── FOOTER SLIDE ── */
+.footer-meta {
+  margin-top: 2rem;
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.meta-item {
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  color: var(--dim);
+  letter-spacing: .08em;
+}
+.meta-item span { color: var(--paper); }
+
+/* ── DIVIDER ── */
+.divider {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  margin: 1.5rem 0;
+}
+
+/* ── SCROLL HINT ── */
+.scroll-hint {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--dim);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem;
+  animation: bounce 2s ease-in-out infinite;
+}
+.scroll-hint::after {
+  content: '↓';
+  font-size: 16px;
+  color: var(--gold);
+}
+@keyframes bounce {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50%      { transform: translateX(-50%) translateY(6px); }
+}
+
+/* ── FADE IN ── */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeUp .8s ease forwards;
+}
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in:nth-child(1) { animation-delay: .1s; }
+.fade-in:nth-child(2) { animation-delay: .3s; }
+.fade-in:nth-child(3) { animation-delay: .5s; }
+.fade-in:nth-child(4) { animation-delay: .7s; }
+.fade-in:nth-child(5) { animation-delay: .9s; }
+
+@media (max-width: 768px) {
+  .planet-ring { display: none; }
+  .slide { padding: 4vh 6vw; }
+  .nav { right: .75rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ NAV DOTS ══ -->
+<nav class="nav" aria-label="Slide navigation">
+  <button class="nav-dot active" onclick="scrollToSlide(0)" title="Title"></button>
+  <button class="nav-dot" onclick="scrollToSlide(1)" title="The Data"></button>
+  <button class="nav-dot" onclick="scrollToSlide(2)" title="Explorer"></button>
+  <button class="nav-dot" onclick="scrollToSlide(3)" title="Kepler's Law"></button>
+  <button class="nav-dot" onclick="scrollToSlide(4)" title="Temperature"></button>
+  <button class="nav-dot" onclick="scrollToSlide(5)" title="Takeaways"></button>
+</nav>
+
+<div class="deck">
+
+  <!-- ══════════ SLIDE 1: TITLE ══════════ -->
+  <section class="slide slide-1" id="slide-0">
+    <div class="stars"></div>
+    <div class="planet-ring"></div>
+
+    <div style="position:relative;z-index:1;max-width:700px">
+      <p class="eyebrow fade-in">Plotly · R Markdown · Interactive Data Presentation</p>
+      <h1 class="hero fade-in">The <em>Music</em><br>of the Solar System</h1>
+      <p class="subtitle fade-in">
+        An interactive journey through planetary orbital mechanics, temperature gradients,
+        and the elegant mathematics hidden in our cosmic neighborhood.
+      </p>
+      <div class="fade-in">
+        <span class="date-badge" id="presentation-date">May 04, 2025</span>
+      </div>
+    </div>
+
+    <div class="scroll-hint">scroll</div>
+    <span class="slide-num">01 / 06</span>
+  </section>
+
+  <!-- ══════════ SLIDE 2: DATA ══════════ -->
+  <section class="slide slide-2" id="slide-1">
+    <div class="stars"></div>
+    <div style="position:relative;z-index:1">
+      <p class="eyebrow">The Dataset</p>
+      <h2 class="slide-heading">Eight worlds.<br><span>Four dimensions.</span></h2>
+      <div class="divider"></div>
+      <p class="subtitle" style="margin-bottom:1rem">
+        NASA planetary constants give us a rich multi-dimensional dataset — distance,
+        orbital period, mass, radius, temperature — all in one tidy data frame.
+      </p>
+
+      <div class="pill-row">
+        <div class="pill"><span class="icon">🪐</span> Orbital Period (days)</div>
+        <div class="pill"><span class="icon">📏</span> Distance from Sun (AU)</div>
+        <div class="pill"><span class="icon">🌍</span> Mass (× Earth)</div>
+        <div class="pill"><span class="icon">🌡️</span> Mean Temperature (K)</div>
+        <div class="pill"><span class="icon">🔵</span> Radius (km)</div>
+        <div class="pill"><span class="icon">🪨</span> Planet Type</div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:4px;padding:1rem 1.3rem;margin-top:.5rem">
+        <pre style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#8a9aaa;line-height:1.7;overflow-x:auto"><span style="color:#c9a84c">planets</span> &lt;- data.frame(
+  name        = c(<span style="color:#7ec8a4">"Mercury","Venus","Earth","Mars",
+                  "Jupiter","Saturn","Uranus","Neptune"</span>),
+  distance_au = c(0.387, 0.723, 1.000, 1.524, 5.203, 9.537, 19.19, 30.07),
+  period_days = c(87.97, 224.7, 365.25, 686.97, 4332.6, 10759, 30687, 60190),
+  mass_earth  = c(0.055, 0.815, 1.000, 0.107, 317.8, 95.16, 14.54, 17.15),
+  temp_k      = c(440, 737, 288, 210, 165, 134, 76, 72),
+  type        = c(<span style="color:#7ec8a4">"Rocky","Rocky","Rocky","Rocky",
+                  "Gas Giant","Gas Giant","Ice Giant","Ice Giant"</span>)
+)</pre>
+      </div>
+    </div>
+    <span class="slide-num">02 / 06</span>
+  </section>
+
+  <!-- ══════════ SLIDE 3: MAIN EXPLORER ══════════ -->
+  <section class="slide slide-3" id="slide-2">
+    <div class="stars"></div>
+    <div style="position:relative;z-index:1;width:100%">
+      <p class="eyebrow">Interactive Plotly Chart</p>
+      <h2 class="slide-heading">Planetary <span>Explorer</span></h2>
+
+      <div class="plot-container">
+        <div id="plot-main" style="width:100%;height:420px"></div>
+      </div>
+      <p class="plot-caption">
+        ✦ Hover over each planet for details · Bubble size = planet radius · Both axes log-scaled ✦
+      </p>
+    </div>
+    <span class="slide-num">03 / 06</span>
+  </section>
+
+  <!-- ══════════ SLIDE 4: KEPLER ══════════ -->
+  <section class="slide slide-4" id="slide-3">
+    <div class="stars"></div>
+    <div style="position:relative;z-index:1;width:100%">
+      <p class="eyebrow">Kepler's Third Law — Visualised</p>
+      <h2 class="slide-heading">A 400-year-old <span>power law</span></h2>
+
+      <div class="equation">T² ∝ a³ &nbsp;→&nbsp; log(T) = 1.5 · log(a) + const</div>
+
+      <div class="plot-container">
+        <div id="plot-kepler" style="width:100%;height:360px"></div>
+      </div>
+      <p class="plot-caption">
+        The best-fit slope is ≈ 1.5 — confirming Kepler's 1619 discovery to modern precision.
+      </p>
+    </div>
+    <span class="slide-num">04 / 06</span>
+  </section>
+
+  <!-- ══════════ SLIDE 5: TEMPERATURE ══════════ -->
+  <section class="slide slide-5" id="slide-4">
+    <div class="stars"></div>
+    <div style="position:relative;z-index:1;width:100%">
+      <p class="eyebrow">Temperature vs Distance</p>
+      <h2 class="slide-heading">The universe <span>runs cold</span></h2>
+
+      <div class="plot-container">
+        <div id="plot-temp" style="width:100%;height:380px"></div>
+      </div>
+      <p class="plot-caption">
+        Green dashed line = 0°C · Bubble size = planet radius · Note Venus: hotter than Mercury due to greenhouse effect
+      </p>
+    </div>
+    <span class="slide-num">05 / 06</span>
+  </section>
+
+  <!-- ══════════ SLIDE 6: TAKEAWAYS ══════════ -->
+  <section class="slide slide-6" id="slide-5">
+    <div class="stars"></div>
+    <div style="position:relative;z-index:1;max-width:900px">
+      <p class="eyebrow">Key Takeaways</p>
+      <h2 class="slide-heading">What the data <span>reveals</span></h2>
+      <div class="divider"></div>
+
+      <div class="cards">
+        <div class="card">
+          <div class="card-num">01 — Orbital Mechanics</div>
+          <p>Kepler's Third Law holds with extraordinary precision. The log-log slope of 1.5 was discovered in 1619 — long before anyone knew why.</p>
+        </div>
+        <div class="card">
+          <div class="card-num">02 — Temperature Gradient</div>
+          <p>Temperature follows an inverse power law with distance. Neptune sits at −201°C — colder than dry ice. Yet proximity isn't everything: Venus is hotter than Mercury.</p>
+        </div>
+        <div class="card">
+          <div class="card-num">03 — Size Discontinuity</div>
+          <p>The gas giants are not just larger — they represent a categorical break. Jupiter's radius is 11× Earth's; its mass is 318× greater.</p>
+        </div>
+        <div class="card">
+          <div class="card-num">04 — Plotly's Power</div>
+          <p>Interactive visualisation reveals structure impossible to see in static charts. Hover, zoom, and filter to find your own patterns in the data.</p>
+        </div>
+      </div>
+
+      <div class="footer-meta">
+        <div class="meta-item">Data: <span>NASA Planetary Fact Sheets</span></div>
+        <div class="meta-item">Tools: <span>R · Plotly · R Markdown</span></div>
+        <div class="meta-item">Date: <span id="footer-date">May 04, 2025</span></div>
+      </div>
+    </div>
+    <span class="slide-num">06 / 06</span>
+  </section>
+
+</div><!-- /deck -->
+
+<script>
+// ── DATA ──
+const planets = {
+  name:        ["Mercury","Venus","Earth","Mars","Jupiter","Saturn","Uranus","Neptune"],
+  dist:        [0.387, 0.723, 1.000, 1.524, 5.203, 9.537, 19.19, 30.07],
+  period:      [87.97, 224.7, 365.25, 686.97, 4332.6, 10759, 30687, 60190],
+  mass:        [0.055, 0.815, 1.000, 0.107, 317.8, 95.16, 14.54, 17.15],
+  radius:      [2439, 6052, 6371, 3390, 69911, 58232, 25362, 24622],
+  temp:        [440, 737, 288, 210, 165, 134, 76, 72],
+  color:       ["#b5b5b5","#e8cda0","#4a9af5","#c1440e","#c9a96e","#e8d5a3","#72d7e8","#4169e1"],
+  type:        ["Rocky","Rocky","Rocky","Rocky","Gas Giant","Gas Giant","Ice Giant","Ice Giant"]
+};
+
+const plotBg   = 'rgba(10,20,32,0)';
+const paperBg  = 'rgba(10,20,32,0)';
+const gridCol  = 'rgba(255,255,255,.06)';
+const axisFont = { color: '#8a9aaa', family: 'Syne, sans-serif', size: 11 };
+const titleFont= { color: '#f5f0e8', family: 'Cormorant Garamond, Georgia, serif', size: 16 };
+
+const hoverLabel = { bgcolor: '#0d1117', bordercolor: '#c9a84c',
+                     font: { color: '#f5f0e8', size: 13, family: 'Syne, sans-serif' } };
+
+const layoutBase = {
+  plot_bgcolor:  plotBg,
+  paper_bgcolor: paperBg,
+  font: { color: '#8a9aaa', family: 'Syne, sans-serif' },
+  margin: { t: 50, b: 50, l: 60, r: 30 },
+  hoverlabel: hoverLabel,
+  legend: { font: { color: '#c9a84c', size: 12 },
+            bgcolor: 'rgba(0,0,0,0)', bordercolor: 'rgba(255,255,255,.08)',
+            borderwidth: 1 }
+};
+
+// ── PLOT 1: MAIN EXPLORER ──
+(function() {
+  const typeColors = { "Rocky": "#e8634a", "Gas Giant": "#f0b429", "Ice Giant": "#38bdf8" };
+  const types = [...new Set(planets.type)];
+
+  const traces = types.map(t => {
+    const idx = planets.type.map((v,i) => v===t ? i : -1).filter(i => i>=0);
+    return {
+      x: idx.map(i => planets.dist[i]),
+      y: idx.map(i => planets.period[i]),
+      mode: 'markers',
+      type: 'scatter',
+      name: t,
+      marker: {
+        size: idx.map(i => Math.sqrt(planets.radius[i]) / 8),
+        sizemode: 'diameter',
+        color: typeColors[t],
+        opacity: 0.88,
+        line: { color: 'rgba(255,255,255,.3)', width: 1.5 }
+      },
+      text: idx.map(i =>
+        `<b>${planets.name[i]}</b><br>` +
+        `Distance: ${planets.dist[i]} AU<br>` +
+        `Period: ${Math.round(planets.period[i]).toLocaleString()} days<br>` +
+        `Mass: ${planets.mass[i]}× Earth<br>` +
+        `Radius: ${planets.radius[i].toLocaleString()} km<br>` +
+        `Temp: ${planets.temp[i]} K (${Math.round(planets.temp[i]-273)}°C)`
+      ),
+      hoverinfo: 'text'
+    };
+  });
+
+  // Label annotations
+  const annotations = planets.name.map((n,i) => ({
+    x: Math.log10(planets.dist[i]),
+    y: Math.log10(planets.period[i]),
+    text: n,
+    showarrow: false,
+    yshift: 14,
+    font: { color: 'rgba(245,240,232,.7)', size: 11, family: 'Syne, sans-serif' },
+    xref: 'x', yref: 'y'
+  }));
+
+  Plotly.newPlot('plot-main', traces, {
+    ...layoutBase,
+    title: { text: 'Orbital Period vs Distance from the Sun', font: titleFont, x: .04 },
+    xaxis: { title: { text: 'Distance (AU)', font: axisFont },
+             type: 'log', gridcolor: gridCol, tickfont: axisFont,
+             linecolor: 'rgba(255,255,255,.1)', zerolinecolor: 'rgba(255,255,255,.1)' },
+    yaxis: { title: { text: 'Orbital Period (days)', font: axisFont },
+             type: 'log', gridcolor: gridCol, tickfont: axisFont,
+             linecolor: 'rgba(255,255,255,.1)', zerolinecolor: 'rgba(255,255,255,.1)' },
+    annotations
+  }, { responsive: true, displayModeBar: false });
+})();
+
+// ── PLOT 2: KEPLER ──
+(function() {
+  const logDist   = planets.dist.map(d => Math.log10(d));
+  const logPeriod = planets.period.map(p => Math.log10(p / 365.25));
+
+  // Simple linear regression
+  const n  = logDist.length;
+  const mx = logDist.reduce((a,b)=>a+b,0)/n;
+  const my = logPeriod.reduce((a,b)=>a+b,0)/n;
+  const num= logDist.reduce((s,x,i)=>s+(x-mx)*(logPeriod[i]-my),0);
+  const den= logDist.reduce((s,x)=>s+(x-mx)**2,0);
+  const slope = num/den, inter = my - slope*mx;
+
+  const xSeq  = [-0.5,-0.4,-0.3,-0.2,-0.1,0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5];
+  const yFit  = xSeq.map(x => slope*x + inter);
+
+  Plotly.newPlot('plot-kepler', [
+    {
+      x: logDist, y: logPeriod,
+      mode: 'markers+text', type: 'scatter',
+      text: planets.name, textposition: 'top center',
+      textfont: { color: 'rgba(245,240,232,.7)', size: 11, family: 'Syne, sans-serif' },
+      marker: { color: planets.color, size: 14, opacity: .9,
+                line: { color: 'rgba(255,255,255,.3)', width: 1.5 } },
+      hovertext: planets.name.map((n,i) =>
+        `<b>${n}</b><br>log(a) = ${logDist[i].toFixed(3)}<br>log(T) = ${logPeriod[i].toFixed(3)}`),
+      hoverinfo: 'text',
+      name: 'Planets'
+    },
+    {
+      x: xSeq, y: yFit, mode: 'lines', type: 'scatter',
+      line: { color: '#c9a84c', width: 2, dash: 'dash' },
+      name: `Fit (slope = ${slope.toFixed(2)})`,
+      hoverinfo: 'skip'
+    }
+  ], {
+    ...layoutBase,
+    title: { text: "Kepler's Third Law: log(T) vs log(a)", font: titleFont, x: .04 },
+    xaxis: { title: { text: 'log₁₀(Distance in AU)', font: axisFont },
+             gridcolor: gridCol, tickfont: axisFont,
+             linecolor: 'rgba(255,255,255,.1)', zerolinecolor: 'rgba(255,255,255,.05)' },
+    yaxis: { title: { text: 'log₁₀(Period in Years)', font: axisFont },
+             gridcolor: gridCol, tickfont: axisFont,
+             linecolor: 'rgba(255,255,255,.1)', zerolinecolor: 'rgba(255,255,255,.05)' },
+  }, { responsive: true, displayModeBar: false });
+})();
+
+// ── PLOT 3: TEMPERATURE ──
+(function() {
+  Plotly.newPlot('plot-temp', [
+    {
+      x: planets.dist, y: planets.temp,
+      mode: 'markers+lines', type: 'scatter',
+      marker: {
+        color: planets.color,
+        size: planets.radius.map(r => Math.sqrt(r)/4),
+        sizemode: 'diameter', opacity: .9,
+        line: { color: 'rgba(255,255,255,.3)', width: 1.5 }
+      },
+      line: { color: 'rgba(255,255,255,.1)', width: 1, dash: 'dot' },
+      text: planets.name.map((n,i) =>
+        `<b>${n}</b><br>${planets.dist[i]} AU · ${planets.temp[i]} K (${Math.round(planets.temp[i]-273)}°C)`),
+      hoverinfo: 'text',
+      showlegend: false
+    }
+  ], {
+    ...layoutBase,
+    title: { text: 'Surface Temperature vs Distance from the Sun', font: titleFont, x: .04 },
+    xaxis: { title: { text: 'Distance (AU)', font: axisFont },
+             type: 'log', gridcolor: gridCol, tickfont: axisFont,
+             linecolor: 'rgba(255,255,255,.1)', zerolinecolor: 'rgba(255,255,255,.05)' },
+    yaxis: { title: { text: 'Mean Temperature (K)', font: axisFont },
+             gridcolor: gridCol, tickfont: axisFont,
+             linecolor: 'rgba(255,255,255,.1)', zerolinecolor: 'rgba(255,255,255,.05)' },
+    shapes: [{
+      type: 'line', x0: 0.3, x1: 35, y0: 273, y1: 273,
+      line: { color: '#22c55e', width: 1.5, dash: 'dot' },
+      xref: 'x', yref: 'y'
+    }],
+    annotations: [
+      ...planets.name.map((n,i) => ({
+        x: planets.dist[i], y: planets.temp[i],
+        text: n, showarrow: false, yshift: 16,
+        font: { color: 'rgba(245,240,232,.65)', size: 10.5, family: 'Syne, sans-serif' },
+        xref: 'x', yref: 'y'
+      })),
+      {
+        x: 2, y: 273, text: '0°C — Water freezes',
+        showarrow: false, yshift: 10,
+        font: { color: '#22c55e', size: 11, family: 'Syne, sans-serif' },
+        xref: 'x', yref: 'y', xanchor: 'left'
+      }
+    ]
+  }, { responsive: true, displayModeBar: false });
+})();
+
+// ── DATE ──
+(function() {
+  const d = new Date('2026-05-04');
+  const fmt = d.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+  document.getElementById('presentation-date').textContent = fmt;
+  document.getElementById('footer-date').textContent = fmt;
+})();
+
+// ── NAV DOTS ──
+const slides = document.querySelectorAll('.slide');
+const dots   = document.querySelectorAll('.nav-dot');
+
+function scrollToSlide(i) {
+  slides[i].scrollIntoView({ behavior: 'smooth' });
+}
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const i = [...slides].indexOf(e.target);
+      dots.forEach((d,j) => d.classList.toggle('active', j===i));
+    }
+  });
+}, { threshold: .5 });
+
+slides.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
